@@ -12,6 +12,6 @@ profile = "black"
 multi_line_output = 3
 
 [tool.darkrag]
-debug_mode = true
+debug_mode = false
 chunk_size = 1000
 chunk_overlap = 100
