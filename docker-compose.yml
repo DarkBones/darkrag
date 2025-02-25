@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    container_name: darkrag
+    networks:
+      - ai-network
+    volumes:
+      - .:/app
+      - /mnt/SnapIgnore/AI/knowledge:/data
+    working_dir: /app
+    ports:
+      - "8004:8004"
+    environment:
+      PYTHONUNBUFFERED: 1
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      DEFAULT_DATABASE_TABLE: ${DEFAULT_DATABASE_TABLE}
+      OLLAMA_URL: ${OLLAMA_URL}
+      DEFAULT_MODEL: ${DEFAULT_MODEL}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+      AUTHOR_NAME: ${AUTHOR_NAME}
+      AUTHOR_FULL_NAME: ${AUTHOR_FULL_NAME}
+      AUTHOR_PRONOUN_ONE: ${AUTHOR_PRONOUN_ONE}
+      AUTHOR_PRONOUN_TWO: ${AUTHOR_PRONOUN_TWO}
+    command: uvicorn main:app --host 0.0.0.0 --port 8004 --reload
+
+networks:
+  ai-network:
+    external: true

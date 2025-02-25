@@ -1,0 +1,32 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Logs and caches
+*.log
+*.coverage
+.cache/
+pip-log.txt
+
+# Environment variables and secrets
+.env
+*.env
+
+# Git and version control
+.git/
+.gitignore
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Data volumes or external mounts
+/mnt/SnapIgnore/
+ignore/
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# Ignore docker-compose override if exists
+docker-compose.override.yml
