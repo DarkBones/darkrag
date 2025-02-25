@@ -1,0 +1,5 @@
+fastapi
+langchain-text-splitters
+supabase
+uvicorn
+pydantic-ai
