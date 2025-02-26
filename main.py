@@ -65,6 +65,10 @@ async def _process_file_paths(
     }
 
 
+@app.get("/")
+async def status():
+    return "darkrag is running and ready to accept requests"
+
 @app.post("/store/delete_files")
 async def delete_files(request: Request):
     """
