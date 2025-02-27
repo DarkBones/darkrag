@@ -87,7 +87,7 @@ class FileToVec:
             )
             chunk["metadata"]["file_path"] = file_path
 
-            processed = self.database_service.insert(chunk)
+            processed, err = self.database_service.insert(chunk)
             if not processed:
                 raise FailedToProcessFileError(f"Failed to process {file_path}")
 

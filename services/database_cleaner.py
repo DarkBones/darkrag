@@ -36,7 +36,7 @@ class DatabaseCleaner:
         if db_table is not None:
             self.db_service.set_db_table(db_table)
 
-        files_on_db = self.db_service.files_on_db()
+        files_on_db, err = self.db_service.files_on_db()
 
         if len(files_on_db) == 0:
             return

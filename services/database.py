@@ -50,7 +50,7 @@ class DatabaseService:
             return
         self.db_table = db_table
 
-    def content_exists_in_database(self, content: str) -> bool:
+    def content_exists_in_database(self, content: str) -> [bool, Exception]:
         """
         Check if content already exists in the database using MD5 hash
         comparison.
@@ -65,22 +65,25 @@ class DatabaseService:
             bool: True if the content exists in the database, False otherwise
         """
 
-        debug_mode = settings.get("debug_mode", False)
-        if debug_mode:
-            return False
+        try:
+            debug_mode = settings.get("debug_mode", False)
+            if debug_mode:
+                return [False, None]
 
-        md5 = self._hash_text(content)
-        response = (
-            self.db.table(self.db_table)
-            .select("*")
-            .eq(
-                "content_hash",
-                md5,
-            )
-        ).execute()
-        return len(response.data) > 0
+            md5 = self._hash_text(content)
+            response = (
+                self.db.table(self.db_table)
+                .select("*")
+                .eq(
+                    "content_hash",
+                    md5,
+                )
+            ).execute()
+            return [len(response.data) > 0, None]
+        except Exception as e:
+            return [None, e]
 
-    def insert(self, data: dict) -> bool:
+    def insert(self, data: dict) -> [bool, Exception]:
         """
         Inserts a record into the Supabase table.
 
@@ -94,20 +97,23 @@ class DatabaseService:
 
         debug_mode = settings.get("debug_mode", False)
         if debug_mode:
-            return True
+            return [True, None]
 
-        data["content_hash"] = self._hash_text(data["content"])
-        response = self.db.table(self.db_table).insert(data).execute()
+        try:
+            data["content_hash"] = self._hash_text(data["content"])
+            response = self.db.table(self.db_table).insert(data).execute()
 
-        ids = [record.get("id") for record in response.data if "id" in record]
+            ids = [record.get("id") for record in response.data if "id" in record]
 
-        if len(ids) == 0:
-            return False
+            if len(ids) == 0:
+                return [False, None]
 
-        self.logger.info(f"Inserted data with ids = {ids}")
-        return True
+            self.logger.info(f"Inserted data with ids = {ids}")
+            return [True, None]
+        except Exception as e:
+            return [None, e]
 
-    def delete_documents_by_path(self, path: str):
+    def delete_documents_by_path(self, path: str) -> Exception:
         """
         Deletes documents from the Supabase table where metadata->>'file_path'
         matches the provided path.
@@ -118,23 +124,26 @@ class DatabaseService:
         debug_mode = settings.get("debug_mode", False)
         if debug_mode:
             self.logger.info(f"MOCK DELETE PATH: {path}")
-            return
+            return None
 
-        response = (
-            self.db.table(self.db_table)
-            .delete()
-            .filter("metadata->>file_path", "eq", path)
-            .execute()
-        )
+        try:
+            response = (
+                self.db.table(self.db_table)
+                .delete()
+                .filter("metadata->>file_path", "eq", path)
+                .execute()
+            )
 
-        ids = [record.get("id") for record in response.data if "id" in record]
+            ids = [record.get("id") for record in response.data if "id" in record]
 
-        if len(ids) == 0:
-            return
+            if len(ids) == 0:
+                return None
 
-        self.logger.info(f"Deleted {len(ids)} rows of data: {ids}")
+            self.logger.info(f"Deleted {len(ids)} rows of data: {ids}")
+        except Exception as e:
+            return e
 
-    def delete_document_by_id(self, row_id: int):
+    def delete_document_by_id(self, row_id: int) -> [dict, Exception]:
         """
         Delete rows by id.
 
@@ -144,55 +153,64 @@ class DatabaseService:
         debug_mode = settings.get("debug_mode", False)
         if debug_mode:
             self.logger.info(f"MOCK DELETE ID: {row_id}")
-            return None
+            return [None, None]
 
-        response = (
-            self.db.table(self.db_table)
-            .delete()
-            .filter("id", "eq", row_id)
-            .execute()
-        )
+        try:
+            response = (
+                self.db.table(self.db_table)
+                .delete()
+                .filter("id", "eq", row_id)
+                .execute()
+            )
 
-        self.logger.info(f"Deleted row with id: {id}")
-        return response
+            self.logger.info(f"Deleted row with id: {id}")
+            return [response, None]
+        except Exception as e:
+            return [None, e]
 
-    def files_on_db(self) -> List[str]:
+    def files_on_db(self) -> [List[str], Exception]:
         """
         Returns a list of unique file paths found in the metadata of all the
         rows.
         """
 
-        response = (
-            self.db.table(self.db_table)
-            .select("id", "metadata->>file_path")
-            .execute()
-        )
+        try:
+            response = (
+                self.db.table(self.db_table)
+                .select("id", "metadata->>file_path")
+                .execute()
+            )
 
-        paths = set()
-        for row in response.data:
-            path = row.get("file_path")
-            if path is None:
-                # If there's no path in the metadata, just delete the row
-                self.delete_document_by_id(row.get("id"))
+            paths = set()
+            for row in response.data:
+                path = row.get("file_path")
+                if path is None:
+                    # If there's no path in the metadata, just delete the row
+                    self.delete_document_by_id(row.get("id"))
 
-            paths.add(path)
+                paths.add(path)
 
-        return list(paths)
+            return [list(paths), None]
+        except Exception as e:
+            return [None, e]
 
-    def get_hashes_by_path(self, path: str) -> List[dict]:
+    def get_hashes_by_path(self, path: str) -> [List[dict], Exception]:
         """
         Returns a list of md5 hashes associated with a given path.
         """
 
-        response = (
-            self.db.table(self.db_table)
-            .select("id, content_hash")
-            .filter("metadata->>file_path", "eq", path)
-            .execute()
-        )
-        return response.data
+        try:
+            response = (
+                self.db.table(self.db_table)
+                .select("id, content_hash")
+                .filter("metadata->>file_path", "eq", path)
+                .execute()
+            )
+            return [response.data, None]
+        except Exception as e:
+            return [None, e]
 
-    def delete_by_content_hash(self, path: str, content_hash: str):
+    def delete_by_content_hash(self, path: str, content_hash: str) -> [List, Exception]:
         """
         Deletes rows by a given a file path and content hash combination.
         """
@@ -200,13 +218,16 @@ class DatabaseService:
         debug_mode = settings.get("debug_mode", False)
         if debug_mode:
             self.logger.info(f"MOCK DELETE HASH: {content_hash}")
-            return []
+            return [[], None]
 
-        response = (
-            self.db.table(self.db_table)
-            .delete()
-            .filter("metadata->>file_path", "eq", path)
-            .eq("content_hash", content_hash)
-            .execute()
-        )
-        return response.data
+        try:
+            response = (
+                self.db.table(self.db_table)
+                .delete()
+                .filter("metadata->>file_path", "eq", path)
+                .eq("content_hash", content_hash)
+                .execute()
+            )
+            return [response.data, None]
+        except Exception as e:
+            return [None, e]

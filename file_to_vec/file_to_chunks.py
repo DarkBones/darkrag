@@ -105,7 +105,7 @@ class FileToChunks:
         chunks = splitter(content)
         chunk_hashes = {self._hash_text(chunk["content"]) for chunk in chunks}
 
-        existing_chunk_hashes = self.database_service.get_hashes_by_path(
+        existing_chunk_hashes, err = self.database_service.get_hashes_by_path(
             file_path,
         )
         for ech in existing_chunk_hashes:
@@ -123,7 +123,7 @@ class FileToChunks:
     ) -> List[dict]:
         chunks_not_in_db = []
         for chunk in chunks:
-            persisted = self.database_service.content_exists_in_database(
+            persisted, err = self.database_service.content_exists_in_database(
                 chunk["content"],
             )
             if persisted:
