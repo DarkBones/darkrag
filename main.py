@@ -44,7 +44,7 @@ async def _process_file_paths(
     unprocessed_files = []
 
     for file_path in file_paths:
-        processed = await file_vectorizer(
+        processed, err = await file_vectorizer(
             file_path=file_path,
             processor=ChunkSummarizer(
                 llm_service=OllamaService(),
@@ -52,6 +52,11 @@ async def _process_file_paths(
             ollama=OllamaService(),
             db_table=db_table,
         )
+
+        if err is not None:
+            return {
+                "error": str(err),
+            }
 
         if processed:
             processed_files.append(file_path)
@@ -68,6 +73,7 @@ async def _process_file_paths(
 @app.get("/")
 async def status():
     return "darkrag is running and ready to accept requests"
+
 
 @app.post("/store/delete_files")
 async def delete_files(request: Request):

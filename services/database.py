@@ -7,6 +7,8 @@ import logging
 import os
 from typing import List
 
+import httpx
+
 from database.supabase import Supabase
 from settings import settings
 
@@ -21,6 +23,11 @@ class DatabaseService:
         db_table (str): The table in the database to query. Fetched from
         environment variables if not provided.
     """
+
+    SUPABASE_CONNECTION_ERROR = (
+        "Could not connect to Supabase. Check if Supabase is running and able "
+        "to accept connections."
+    )
 
     @staticmethod
     def _hash_text(text: str) -> str:
@@ -80,6 +87,8 @@ class DatabaseService:
                 )
             ).execute()
             return [len(response.data) > 0, None]
+        except httpx.ConnectError:
+            return [None, ConnectionError(self.SUPABASE_CONNECTION_ERROR)]
         except Exception as e:
             return [None, e]
 
@@ -110,6 +119,8 @@ class DatabaseService:
 
             self.logger.info(f"Inserted data with ids = {ids}")
             return [True, None]
+        except httpx.ConnectError:
+            return [None, ConnectionError(self.SUPABASE_CONNECTION_ERROR)]
         except Exception as e:
             return [None, e]
 
@@ -140,6 +151,8 @@ class DatabaseService:
                 return None
 
             self.logger.info(f"Deleted {len(ids)} rows of data: {ids}")
+        except httpx.ConnectError:
+            return [None, ConnectionError(self.SUPABASE_CONNECTION_ERROR)]
         except Exception as e:
             return e
 
@@ -165,6 +178,8 @@ class DatabaseService:
 
             self.logger.info(f"Deleted row with id: {id}")
             return [response, None]
+        except httpx.ConnectError:
+            return [None, ConnectionError(self.SUPABASE_CONNECTION_ERROR)]
         except Exception as e:
             return [None, e]
 
@@ -191,6 +206,8 @@ class DatabaseService:
                 paths.add(path)
 
             return [list(paths), None]
+        except httpx.ConnectError:
+            return [None, ConnectionError(self.SUPABASE_CONNECTION_ERROR)]
         except Exception as e:
             return [None, e]
 
@@ -207,7 +224,10 @@ class DatabaseService:
                 .execute()
             )
             return [response.data, None]
+        except httpx.ConnectError:
+            return [None, ConnectionError(self.SUPABASE_CONNECTION_ERROR)]
         except Exception as e:
+            raise e
             return [None, e]
 
     def delete_by_content_hash(self, path: str, content_hash: str) -> [List, Exception]:
@@ -229,5 +249,7 @@ class DatabaseService:
                 .execute()
             )
             return [response.data, None]
+        except httpx.ConnectError:
+            return [None, ConnectionError(self.SUPABASE_CONNECTION_ERROR)]
         except Exception as e:
             return [None, e]

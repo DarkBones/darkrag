@@ -55,7 +55,7 @@ class FileToVec:
         processor,
         ollama,
         db_table: str = None,
-    ) -> bool:
+    ) -> [bool, Exception]:
         """
         Process a file and store its vector embeddings in the database.
 
@@ -77,9 +77,12 @@ class FileToVec:
         if db_table is not None:
             self.database_service.set_db_table(db_table)
 
-        chunks = await self.file_to_chunks.process(file_path, processor)
+        chunks, err = await self.file_to_chunks.process(file_path, processor)
+        if err is not None:
+            return None, err
+
         if chunks is None or chunks is False:
-            return False
+            return False, None
 
         for chunk in chunks:
             chunk["embedding"] = await ollama.get_embeddings(
@@ -91,4 +94,4 @@ class FileToVec:
             if not processed:
                 raise FailedToProcessFileError(f"Failed to process {file_path}")
 
-        return True
+        return True, None

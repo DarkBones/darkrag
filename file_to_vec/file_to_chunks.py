@@ -56,22 +56,25 @@ class FileToChunks:
         self,
         file_path: str,
         processor,
-    ) -> List[dict]:
+    ) -> [List[dict], None]:
         """
         Process a file into chunks with deduplication.
         """
 
         content, splitter = self._prepare_file_content(file_path)
         if not content or len(content) <= 5:
-            return []
+            return [], None
 
-        chunks = self._generate_chunks(file_path, splitter, content)
+        chunks, err = self._generate_chunks(file_path, splitter, content)
+        if err is not None:
+            return None, err
+
         if not chunks:
-            return []
+            return [], None
 
         chunks_to_process = self._filter_chunks_for_processing(chunks)
         if not chunks_to_process:
-            return []
+            return [], None
 
         return await processor.process_chunks(
             chunks,
@@ -101,13 +104,16 @@ class FileToChunks:
         file_path: str,
         splitter: Callable,
         content: str,
-    ) -> List[dict]:
+    ) -> [List[dict], Exception]:
         chunks = splitter(content)
         chunk_hashes = {self._hash_text(chunk["content"]) for chunk in chunks}
 
         existing_chunk_hashes, err = self.database_service.get_hashes_by_path(
             file_path,
         )
+        if err is not None:
+            return None, err
+
         for ech in existing_chunk_hashes:
             if ech["content_hash"] not in chunk_hashes:
                 self.database_service.delete_by_content_hash(
