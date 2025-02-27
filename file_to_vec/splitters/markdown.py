@@ -245,7 +245,6 @@ class MarkdownSplitter(BaseSplitter):
         """
 
         blocks = []
-        print("TEXT", text)
         lines = text.split("\n")
         current_paragraph = []
         i = 0
