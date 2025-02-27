@@ -45,7 +45,7 @@ class OllamaService:
         self,
         messages: List[dict],
         model: str = None,
-    ) -> str:
+    ) -> [str, Exception]:
         """
         Sends a list of messages to the Ollama API and retrieves the chat
         response.
@@ -81,20 +81,23 @@ class OllamaService:
 
         if debug_mode:
             print(data)
-            return "Debug mode on. Placeholder response"
+            return "Debug mode on. Placeholder response", None
 
-        async with httpx.AsyncClient(timeout=httpx.Timeout(180.0)) as client:
-            response = await client.post(url, json=data)
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(180.0)) as client:
+                response = await client.post(url, json=data)
 
-        if response.status_code == 200:
-            return response.json()["message"]["content"]
+            if response.status_code == 200:
+                return response.json()["message"]["content"], None
 
-        err = f"{response.status_code}, {response.text}"
-        self.logger.error(err)
+            err = f"{response.status_code}, {response.text}"
+            self.logger.error(err)
 
-        raise ValueError(err)
+            return None, ValueError(err)
+        except Exception as e:
+            return None, e
 
-    async def get_embeddings(self, text: str) -> List[float]:
+    async def get_embeddings(self, text: str) -> [List[float], Exception]:
         """
         Retrieves text embeddings for a given input string from the Ollama API.
 
@@ -116,13 +119,16 @@ class OllamaService:
             "stream": False,
         }
 
-        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
-            response = await client.post(url, json=data)
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
+                response = await client.post(url, json=data)
 
-        if response.status_code == 200:
-            return response.json()["embeddings"][0]
+            if response.status_code == 200:
+                return response.json()["embeddings"][0], None
 
-        err = f"{response.status_code}, {response.text}"
-        self.logger.error(err)
+            err = f"{response.status_code}, {response.text}"
+            self.logger.error(err)
 
-        raise ValueError(err)
+            return None, ValueError(err)
+        except Exception as e:
+            return None, e

@@ -21,7 +21,7 @@ class DatabaseCleaner:
     def __init__(self, db_service):
         self.db_service = db_service
 
-    def __call__(self, db_table: str = None):
+    def __call__(self, db_table: str = None) -> Exception:
         """
         Clean the database by removing entries for non-existent files.
 
@@ -37,6 +37,8 @@ class DatabaseCleaner:
             self.db_service.set_db_table(db_table)
 
         files_on_db, err = self.db_service.files_on_db()
+        if err is not None:
+            return err
 
         if len(files_on_db) == 0:
             return

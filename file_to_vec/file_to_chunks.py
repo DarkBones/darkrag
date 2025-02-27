@@ -121,7 +121,7 @@ class FileToChunks:
                     ech["content_hash"],
                 )
 
-        return chunks
+        return chunks, None
 
     def _filter_chunks_for_processing(
         self,

@@ -74,7 +74,7 @@ class ChunkSummarizer:
         all_chunks,
         chunks_to_process: List[dict],
         written_by_me: bool,
-    ) -> List[dict]:
+    ) -> [List[dict], Exception]:
         """
         Process a list of document chunks to generate summaries.
 
@@ -107,9 +107,12 @@ class ChunkSummarizer:
 
         processed_chunks = []
         if len(chunks_to_process) == 0:
-            return []
+            return [], None
 
-        file_summary = await self._get_file_summary(all_chunks, written_by_me)
+        file_summary, err = await self._get_file_summary(all_chunks, written_by_me)
+        if err is not None:
+            return None, err
+
         file_summ_prompt = ""
         if file_summary:
             file_summ_prompt = self.FILE_SUMMARY
@@ -119,24 +122,28 @@ class ChunkSummarizer:
 
 
         for chunk in chunks_to_process:
-            processed = await self._process_chunk(
+            processed, err = await self._process_chunk(
                 file_summ_prompt,
                 file_summary,
                 chunk,
                 written_by_me,
             )
+
+            if err is not None:
+                return None, err
+
             processed_chunks.append(processed)
 
-        return processed_chunks
+        return processed_chunks, None
 
     async def _get_file_summary(
         self,
         chunks: List[dict],
         written_by_me: bool,
-    ) -> str:
+    ) -> [str, Exception]:
         nr_init_chunks = min(self.CHUNKS_TO_USE_FOR_FILE_SUMMARY, len(chunks))
         if nr_init_chunks <= 1:
-            return
+            return None, None
 
         init_chunk_contents = []
         start_chunks = math.ceil(nr_init_chunks / 2)
@@ -150,27 +157,35 @@ class ChunkSummarizer:
             init_chunk_contents.append(chunk["content"])
 
         chunk_str = "\n\n".join(init_chunk_contents)
-        summary = await self._generate_document_summary(
+        summary, err = await self._generate_document_summary(
             chunk_str,
             written_by_me,
         )
 
-        return summary
+        if err is not None:
+            return None, err
+
+        return summary, None
 
     async def _generate_document_summary(
         self,
         initial_chunk: str,
         written_by_me: bool,
-    ) -> str:
+    ) -> [str, Exception]:
         prompt = self.SUMMARIZE_FILE_PROMPT
         if written_by_me:
             prompt = f"{prompt} {self._parse_written_by_me_prompt()}"
         print("SYSTEM_PROMPT:", prompt)
 
-        return await self._send_llm_message(
+        res, err = await self._send_llm_message(
             system_prompt=prompt,
             message=initial_chunk,
         )
+
+        if err is not None:
+            return None, err
+        
+        return res, None
 
     async def _process_chunk(
         self,
@@ -178,7 +193,7 @@ class ChunkSummarizer:
         file_summary: str,
         chunk: dict,
         written_by_me: bool,
-    ) -> dict:
+    ) -> [dict, Exception]:
         prompt = self.SUMMARIZE_CHUNK_PROMPT
         if written_by_me:
             prompt = f"{prompt} {self._parse_written_by_me_prompt()}"
@@ -197,10 +212,13 @@ class ChunkSummarizer:
                 "content": chunk["content"],
             },
         ]
-        summary = await self.llm_service.chat(
+        summary, err = await self.llm_service.chat(
             messages=messages,
             model=self.model_name,
         )
+
+        if err is not None:
+            return None, err
 
         chunk["full_context"] = ""
         if len(file_summary) > 0:
@@ -208,9 +226,9 @@ class ChunkSummarizer:
 
         chunk["full_context"] += f"<chunk_summary>\n{summary}\n</chunk_summary>"
         chunk["full_context"] += f"\n\n{chunk['content']}"
-        return chunk
+        return chunk, None
 
-    async def _send_llm_message(self, system_prompt: str, message: str) -> str:
+    async def _send_llm_message(self, system_prompt: str, message: str) -> [str, Exception]:
         messages = [
             {
                 "role": "system",
@@ -222,9 +240,12 @@ class ChunkSummarizer:
             },
         ]
 
-        response = await self.llm_service.chat(
+        response, err = await self.llm_service.chat(
             messages=messages,
             model=self.model_name,
         )
 
-        return response
+        if err is not None:
+            return None, err
+
+        return response, None

@@ -130,7 +130,11 @@ async def clean_database(request: Request):
     db_table = body.get("db_table")
 
     cleaner = DatabaseCleaner(db_service=db_service)
-    cleaner(db_table)
+    err = cleaner(db_table)
+    if err is not None:
+        return {
+            "error": str(err)
+        }
 
     return {
         "message": "success",

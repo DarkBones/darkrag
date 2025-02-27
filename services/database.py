@@ -227,7 +227,6 @@ class DatabaseService:
         except httpx.ConnectError:
             return [None, ConnectionError(self.SUPABASE_CONNECTION_ERROR)]
         except Exception as e:
-            raise e
             return [None, e]
 
     def delete_by_content_hash(self, path: str, content_hash: str) -> [List, Exception]:

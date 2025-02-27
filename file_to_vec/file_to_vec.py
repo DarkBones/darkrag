@@ -85,9 +85,12 @@ class FileToVec:
             return False, None
 
         for chunk in chunks:
-            chunk["embedding"] = await ollama.get_embeddings(
+            chunk["embedding"], err = await ollama.get_embeddings(
                 chunk["full_context"],
             )
+            if err is not None:
+                return None, err
+
             chunk["metadata"]["file_path"] = file_path
 
             processed, err = self.database_service.insert(chunk)
