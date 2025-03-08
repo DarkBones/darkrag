@@ -18,8 +18,6 @@ If you work with **other formats (vimwiki, text files, web pages)**, you can ext
 ✔️ How to configure it with Supabase & Ollama  
 ✔️ How to troubleshoot & optimize your setup  
 
-For a **full RAG pipeline** (vector search, LLM augmentation, automation), read **[this tutorial](https://darkbones.dev/posts/rag-but-i-made-it-smarter/)**.
-
 ---
 
 ## ✅ **Why This Works Better Than Naive RAG**  
