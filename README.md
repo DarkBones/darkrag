@@ -1,9 +1,5 @@
 ### **🚀 darkrag: A Lightweight Context-Aware RAG System**  
 
-> **RAG isn’t a complete AI system, it’s just a piece of the puzzle.**  
-> If you're looking for a **full RAG setup guide**, check out my deep dive:  
-> 👉 **[RAG, But I Made it Smarter](https://darkbones.dev/posts/rag-but-i-made-it-smarter/)**  
-
 ### **🔹 What is darkrag?**  
 darkrag is a **lightweight, self-hosted RAG system** designed for **retrieving knowledge from markdown files**. Instead of returning **random isolated text chunks**, darkrag stores and retrieves **context-enriched embeddings**, ensuring your AI gets the most relevant information.  
 
